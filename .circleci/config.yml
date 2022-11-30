@@ -228,12 +228,45 @@ jobs:
 
       - revert-migration
       - destroy-environment
-  # deploy-backend:
-  #   docker:
-  #     - image: 
-  #   steps:
-  #     - 
+
+  deploy-backend:
+    docker:
+      - image: python:3.9.15-bullseye
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: backend-build
+      - add_ssh_keys:
+          fingerprints:
+            - "46:b1:c2:e9:10:39:f9:58:1d:df:65:f7:bb:b4:0b:11"
+      - attach_workspace:
+          at: ~/project/
+      - run: sudo apt-get install -y tar gzip openssh
+      - run: |
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && \
+          sudo apt-get install -y nodejs
+      - run: 
+          name: Install ansible
+          command: python3 -m pip install ansible
+      - run: 
+          name: transfer build 
+          command: |
+              cd backend
+              npm i
+              npm run build
+              cd ..
+              tar -C backend -czvf artifact.tar.gz ./circleci/ansible/roles/deploy/files/
+
+      - run: 
+          name: Run playbook
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt deploy-backend.yml
           
+      - revert-migration
+      - destroy-environment
+  
 workflows:
   dev:
     jobs:
@@ -262,5 +295,8 @@ workflows:
           requires:
             - configure-infrastructure
       - deploy-frontend: 
+          requires:
+            - run-migrations
+      - deploy-backend: 
           requires:
             - run-migrations

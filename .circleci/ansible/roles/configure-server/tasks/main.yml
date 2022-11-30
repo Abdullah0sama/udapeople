@@ -3,7 +3,10 @@
     become: true
     apt:
       upgrade: "yes"
-
+  - name: Install tar
+    become: true
+    apt:
+      name: tar
 
   - name: Install node, npm
     become: true
