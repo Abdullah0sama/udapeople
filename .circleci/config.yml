@@ -29,7 +29,7 @@ commands:
           name: Revert migrations
           command: |
             export Success=$(curl --insecure https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            if $(( $Success==1 ))
+            if [[ "${Success}" != "1" ]]
             then
               cd ~/project/backend
               npm install
