@@ -321,8 +321,7 @@ jobs:
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-              echo hello
-              exit 1
+              exit 0
             else
               exit 1
             fi
