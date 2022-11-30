@@ -366,6 +366,10 @@ workflows:
             - test-backend
             - test-frontend
       - configure-infrastructure:
+          filters:
+            branches:
+              only:
+                - main
           requires:
             - deploy-infrastructure
       - run-migrations:
