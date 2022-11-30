@@ -247,7 +247,7 @@ jobs:
           at: ~/project/
       - run: apt-get install -y tar gzip openssh-client
       - run: |
-          curl -fsSL https://deb.nodesource.com/setup_18.x |  bash - && \
+          curl -fsSL https://deb.nodesource.com/setup_14.x |  bash - && \
           apt-get install -y nodejs
       - run: 
           name: Install ansible
