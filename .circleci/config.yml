@@ -29,7 +29,7 @@ commands:
           name: Revert migrations
           command: |
             export Success=$(curl --insecure https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            if $(( $Success==1 ));
+            if $(( $Success==1 ))
             then
               cd ~/project/backend
               npm install
@@ -305,9 +305,9 @@ jobs:
             echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
             then
-                return 0
+                exit 0
             else
-                return 1
+                exit 1
             fi
       - run: 
           name: Frontend smoke test
@@ -317,12 +317,12 @@ jobs:
             if curl -s ${URL} | grep "Welcome"
             then
               echo here
-              return 1
+              exit 1
             else
-              return 1
+              exit 1
             fi
-      - revert-migration
-      - destroy-environment
+      # - revert-migration
+      # - destroy-environment
 
 workflows:
   dev:
