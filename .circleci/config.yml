@@ -9,6 +9,17 @@ commands:
           command: |
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+  revert-migration:
+    description: revert migration
+    steps:
+      - run:
+          command: |
+            Success=$(curl https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            if $(( $Success==1 ));
+            then
+
+              exit 1
+            fi
 jobs:
   build-frontend:
     docker: 
@@ -184,6 +195,47 @@ jobs:
               curl https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
 
+      - run:
+          when: on_fail
+          name: Revert migration
+          command: |
+            cd backend
+            npm run migrations:revert
+
+  deploy-frontend:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - restore_cache:
+          key: frontend-build
+      - run: yum update -y && yum -y install tar gzip
+      - run: 
+          name: set API_URL
+          command: |
+            export Backend_IP=$(aws ec2 describe-instances \
+            --filter "Name=tag:Name, Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+            export API_URL="http://${Backend_IP}:3030"
+            echo API_URL="${API_URL}" >>  frontend/.env
+      - run: echo ${API_URL}
+      - run: 
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+
+      - revert-migration
+      - destroy-environment
+  # deploy-backend:
+  #   docker:
+  #     - image: 
+  #   steps:
+  #     - 
           
 workflows:
   dev:
@@ -210,5 +262,8 @@ workflows:
           requires:
             - deploy-infrastructure
       - run-migrations:
+          requires:
+            - configure-infrastructure
+      - deploy-frontend: 
           requires:
             - configure-infrastructure
