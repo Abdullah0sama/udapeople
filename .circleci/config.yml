@@ -24,7 +24,7 @@ commands:
     steps:
       - run:
           command: |
-            Success=$(curl https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            Success=$(curl --insecure https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7})
             if $(( $Success==1 ));
             then
               cd ~/project/backend
@@ -285,13 +285,14 @@ jobs:
 
   smoke-test:
     docker:
-      - image: alpine:curl
+      - image: amazon/aws-cli
     steps:
       - checkout
-      - attach_workspace:
-          at: '~/project/'
-      - run: cat backend_adress.txt
-      - run: export BACKEND_IP=$(cat backend_adress.txt)
+      - run: | 
+          export Backend_IP=$(aws ec2 describe-instances \
+                --filter "Name=tag:Name, Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --query "Reservations[*].Instances[*].PublicIpAddress" \
+                --output text)
       - run:
           name: Backend smoke test
           command: |
@@ -315,6 +316,8 @@ jobs:
             else
               return 1
             fi
+      - revert-migration
+      - destroy-environment
 
 workflows:
   dev:
