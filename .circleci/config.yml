@@ -164,7 +164,7 @@ jobs:
       - attach_workspace:
           at: ~/project/
 
-      - run: apk add  tar gzip
+      - run: apk add  tar gzip openssh
       - run: 
           name: Install ansible
           command: python3 -m pip install ansible
@@ -195,12 +195,6 @@ jobs:
               curl https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
 
-      - run:
-          when: on_fail
-          name: Revert migration
-          command: |
-            cd backend
-            npm run migrations:revert
 
   deploy-frontend:
     docker:
