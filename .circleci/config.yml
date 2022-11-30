@@ -301,6 +301,7 @@ jobs:
       - run:
           name: Backend smoke test
           command: |
+            sleep 1m
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
@@ -321,8 +322,8 @@ jobs:
             else
               exit 1
             fi
-      # - revert-migration
-      # - destroy-environment
+      - revert-migration
+      - destroy-environment
 
 workflows:
   dev:
