@@ -7,6 +7,15 @@ commands:
       - run:
           when: on_fail
           command: |
+            if ! command -v aws &> /dev/null
+            then
+                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                unzip awscliv2.zip
+                ./aws/install
+            fi
+      - run:
+          when: on_fail
+          command: |
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
   revert-migration:
@@ -220,6 +229,11 @@ jobs:
             export API_URL="http://${Backend_IP}:3030"
             echo API_URL="${API_URL}" >>  frontend/.env
             echo $API_URL
+      - run: echo $Backend_IP > backend_address.txt
+      - persist_to_workspace:
+          root: '~/project/'
+          paths:
+            - "backend_adress.txt"
       - run: 
           name: Deploy frontend objects
           command: |
@@ -270,7 +284,40 @@ jobs:
           
       - revert-migration
       - destroy-environment
-  
+
+  smoke-test:
+    docker:
+      - image: alpine:curl
+    steps:
+      - checkout
+      - attach_workspace:
+          at: '~/project/'
+      - run: cat backend_adress.txt
+      - run: export BACKEND_IP=$(cat backend_adress.txt)
+      - run:
+          name: Backend smoke test
+          command: |
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+                return 0
+            else
+                return 1
+            fi
+      - run: 
+          name: Frontend smoke test
+          command: |
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
+            echo ${URL} 
+            if curl -s ${URL} | grep "Welcome"
+            then
+              echo here
+              return 1
+            else
+              return 1
+            fi
+
 workflows:
   dev:
     jobs:
@@ -306,3 +353,7 @@ workflows:
       - deploy-backend: 
           requires:
             - run-migrations
+      - smoke-test:
+          requires:
+            - deploy-backend
+            - deploy-frontend
