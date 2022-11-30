@@ -27,8 +27,9 @@ commands:
             Success=$(curl https://kvdb.io/3HLz3UMSmAJtaLKt7Y5Uz1/migration_${CIRCLE_WORKFLOW_ID:0:7})
             if $(( $Success==1 ));
             then
-
-              exit 1
+              cd ~/project/backend
+              npm install
+              npm run migration:revert
             fi
 jobs:
   build-frontend:
@@ -231,10 +232,6 @@ jobs:
             echo API_URL="${API_URL}" >>  frontend/.env
             echo $API_URL
       - run: echo $Backend_IP > backend_address.txt
-      - persist_to_workspace:
-          root: '~/project/'
-          paths:
-            - "backend_adress.txt"
       - run: 
           name: Deploy frontend objects
           command: |
