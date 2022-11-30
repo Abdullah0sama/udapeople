@@ -329,6 +329,20 @@ jobs:
       - revert-migration
       - destroy-environment
 
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Update cloudformation
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+
 workflows:
   dev:
     jobs:
@@ -368,3 +382,6 @@ workflows:
           requires:
             - deploy-backend
             - deploy-frontend
+      - cloudfront-update:
+          requires:
+            - smoke-test
