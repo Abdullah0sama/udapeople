@@ -298,6 +298,10 @@ jobs:
                 --query "Reservations[*].Instances[*].PublicIpAddress" \
                 --output text)
           echo "export BACKEND_IP=${BACKEND_IP}" >> "$BASH_ENV"
+          
+      - run: |
+                curl -fsSL https://rpm.nodesource.com/setup_14.x | bash -
+                yum -y install nodejs
       - run:
           name: Backend smoke test
           command: |
