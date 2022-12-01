@@ -333,6 +333,7 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - run: yum update -y && yum -y install tar gzip
       - run: 
           name: Save OldWorkflowID
           command: |
@@ -361,6 +362,8 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - run: yum update -y && yum -y install tar gzip
+
       - attach_workspace:
           at: '.'
       - run: 
