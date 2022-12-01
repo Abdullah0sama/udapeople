@@ -386,16 +386,16 @@ workflows:
           requires:
             - build-frontend
       - deploy-infrastructure:
+          filters:
+            branches:
+              only:
+                - main
           requires:
             - scan-frontend
             - scan-backend
             - test-backend
             - test-frontend
       - configure-infrastructure:
-          filters:
-            branches:
-              only:
-                - main
           requires:
             - deploy-infrastructure
       - run-migrations:
